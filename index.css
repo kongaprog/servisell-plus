@@ -1,0 +1,36 @@
+/* FUENTES */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;700;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* COLORES */
+:root {
+  --color-primary: #00F0FF; /* Azul Cian */
+  --color-dark: #0B1120;    /* Fondo Oscuro */
+}
+
+/* BASE */
+body {
+  background-color: var(--color-dark);
+  color: white;
+  font-family: 'Inter', sans-serif;
+  /* IMPORTANTE: Quitamos overflow-x para arreglar el scroll */
+}
+
+h1, h2, h3, h4, h5, h6, .font-heading, button {
+  font-family: 'Outfit', sans-serif;
+}
+
+/* CLASES ÚTILES */
+.text-brand-gold { color: var(--color-primary); }
+.bg-brand-gold { background-color: var(--color-primary); }
+.bg-brand-dark { background-color: var(--color-dark); }
+
+/* FONDO TECNOLÓGICO (Más sutil para no molestar la lectura) */
+.bg-circuit-pattern {
+  background-color: var(--color-dark);
+  background-image: radial-gradient(#1e293b 1px, transparent 1px);
+  background-size: 20px 20px;
+}
