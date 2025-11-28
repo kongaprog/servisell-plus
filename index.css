@@ -1,36 +1,96 @@
-/* FUENTES */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@300;400;600;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* COLORES */
 :root {
-  --color-primary: #00F0FF; /* Azul Cian */
-  --color-dark: #0B1120;    /* Fondo Oscuro */
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(10, 10, 10, 0.6);
+  --neon-blue: #00f0ff;
+  --neon-purple: #7000ff;
 }
 
-/* BASE */
 body {
-  background-color: var(--color-dark);
-  color: white;
+  background-color: #030014; /* Fondo casi negro, muy profundo */
+  color: #e2e8f0;
   font-family: 'Inter', sans-serif;
-  /* IMPORTANTE: Quitamos overflow-x para arreglar el scroll */
+  overflow-x: hidden;
+  
+  /* Fondo moderno con gradientes sutiles fijos */
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(112, 0, 255, 0.08), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(0, 240, 255, 0.08), transparent 25%);
+  background-attachment: fixed;
 }
 
-h1, h2, h3, h4, h5, h6, .font-heading, button {
+h1, h2, h3, h4, buttons {
   font-family: 'Outfit', sans-serif;
 }
 
-/* CLASES ÚTILES */
-.text-brand-gold { color: var(--color-primary); }
-.bg-brand-gold { background-color: var(--color-primary); }
-.bg-brand-dark { background-color: var(--color-dark); }
+/* CLASE MAESTRA: EFECTO CRISTAL (Glassmorphism) */
+.glass-panel {
+  background: rgba(17, 25, 40, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+}
 
-/* FONDO TECNOLÓGICO (Más sutil para no molestar la lectura) */
-.bg-circuit-pattern {
-  background-color: var(--color-dark);
-  background-image: radial-gradient(#1e293b 1px, transparent 1px);
-  background-size: 20px 20px;
+/* Efecto para el Header */
+.glass-header {
+  background: rgba(3, 0, 20, 0.6);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Textos con degradado (Estilo Nexoweb) */
+.text-gradient {
+  background: linear-gradient(to right, #00f0ff, #0080ff);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(to right, #ffd700, #ffaa00);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Botones Neon */
+.btn-neon {
+  background: linear-gradient(90deg, #00f0ff 0%, #0080ff 100%);
+  color: black;
+  font-weight: 700;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.btn-neon:hover {
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+  transform: translateY(-1px);
+}
+
+.btn-glass {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.btn-glass:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Animación suave de entrada */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.8s ease-out forwards;
 }

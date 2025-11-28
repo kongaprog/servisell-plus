@@ -8,14 +8,17 @@ import Appointment from './components/Appointment';
 import Cart from './components/Cart';
 import Terms from './components/Terms';
 import Privacy from './components/Privacy';
+import Hero from './components/Hero'; // <--- IMPORTAMOS EL NUEVO COMPONENTE
 import { CartItem, Product } from './types';
 import { getProductsFromSheet } from './services/sheet';
 
 function App() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState<'home' | 'store' | 'terms' | 'privacy'>('home');
+  
   const [activeCategory, setActiveCategory] = useState('Todo');
   const [searchQuery, setSearchQuery] = useState('');
+  
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -58,6 +61,10 @@ function App() {
       document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
     }
   };
+
+  // Función para navegar desde el Hero
+  const handleGoToStore = () => setCurrentPage('store');
+  const handleGoToServices = () => scrollTo('services');
 
   // Cabecera con Logo y Menú
   const renderHeader = () => (
@@ -106,17 +113,9 @@ function App() {
       <main className="flex-1 w-full">
         {currentPage === 'home' ? (
           <>
-            <section className="min-h-[70vh] flex items-center justify-center bg-circuit-pattern text-center px-4 relative overflow-hidden">
-               <div className="relative z-10 max-w-3xl">
-                 <div className="inline-block border border-brand-gold/50 text-brand-gold px-4 py-1 rounded-full text-xs font-bold tracking-[0.2em] mb-6">TECNOLOGÍA PROFESIONAL</div>
-                 <h1 className="text-5xl md:text-7xl font-bold text-white mb-8 leading-tight">Reparación <br/> <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-600">Inteligente</span></h1>
-                 <p className="text-gray-400 text-lg mb-10 max-w-xl mx-auto">Servicio técnico avanzado y venta de repuestos originales en Artemisa.</p>
-                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <button onClick={() => scrollTo('services')} className="bg-white text-brand-dark font-bold px-8 py-4 rounded-full hover:bg-gray-200 transition-all">Ver Servicios</button>
-                    <button onClick={() => setCurrentPage('store')} className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-bold px-8 py-4 rounded-full hover:shadow-lg hover:shadow-cyan-500/30 transition-all">Ir a la Tienda</button>
-                 </div>
-               </div>
-            </section>
+            {/* AQUÍ ESTÁ LA NUEVA SECCIÓN DE INICIO */}
+            <Hero onGoToStore={handleGoToStore} onGoToServices={handleGoToServices} />
+            
             <Services />
             <Appointment />
           </>
@@ -125,7 +124,14 @@ function App() {
             loading ? (
               <div className="flex justify-center h-screen items-center text-white gap-3"><Loader2 className="animate-spin text-brand-gold"/> Cargando catálogo...</div>
             ) : (
-              <Store products={products} categoryFilter={activeCategory} searchQuery={searchQuery} onAddToCart={addToCart} setCategoryFilter={setActiveCategory} />
+              <Store 
+                products={products} 
+                categoryFilter={activeCategory} 
+                searchQuery={searchQuery} 
+                onAddToCart={addToCart} 
+                setCategoryFilter={setActiveCategory}
+                setSearchQuery={setSearchQuery} 
+              />
             )
           ) : (
             currentPage === 'terms' ? <Terms onBack={() => setCurrentPage('home')} /> : <Privacy onBack={() => setCurrentPage('home')} />

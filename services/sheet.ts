@@ -1,37 +1,40 @@
 import Papa from 'papaparse';
 import { Product, ProductCondition, DeviceType, PartType, SheetProduct } from '../types';
 
-// 👇 AQUÍ YA PUSE TU ENLACE REAL PARA QUE FUNCIONE DIRECTO 👇
+// 👇 ASEGÚRATE DE QUE ESTE ENLACE SEA EL DE TU HOJA DE CÁLCULO PUBLICADA 👇
 const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT01W_TfP1z_gUn95GLHFegpkwunvCL_Ckw-LA46VOoOQOmBb5z6Mgnws4z8F4ZGXdSASeHocUZHcp8/pub?gid=0&single=true&output=csv';
 
-// Helper para mapear valores de categería a PartType
+// Helper inteligente: Busca la columna aunque tenga mayúsculas o espacios (ej: "Imagen ", "IMAGEN", "foto")
+const getCol = (item: any, colNames: string[]): string => {
+  if (!item) return '';
+  const keys = Object.keys(item);
+  
+  // Busca alguna coincidencia entre las posibles columnas
+  for (const col of colNames) {
+    const foundKey = keys.find(k => k.toLowerCase().trim() === col.toLowerCase().trim());
+    if (foundKey) return item[foundKey];
+  }
+  return '';
+};
+
+// Helper para mapear valores de categoría
 const mapCategoryToPartType = (category: string): PartType => {
-  const categoryLower = category?.toLowerCase().trim() || '';
-  const partTypeMap: Record<string, PartType> = {
-    'pantalla': PartType.SCREEN,
-    'batería': PartType.BATTERY,
-    'puerto': PartType.PORT,
-    'almacenamiento': PartType.STORAGE,
-    'memoria': PartType.RAM,
-    'ram': PartType.RAM,
-  };
-  return partTypeMap[categoryLower] || PartType.OTHER;
+  const cat = category?.toLowerCase().trim() || '';
+  if (cat.includes('pantalla') || cat.includes('display')) return PartType.SCREEN;
+  if (cat.includes('batería') || cat.includes('bateria')) return PartType.BATTERY;
+  if (cat.includes('puerto') || cat.includes('carga')) return PartType.PORT;
+  if (cat.includes('almacenamiento') || cat.includes('disco')) return PartType.STORAGE;
+  if (cat.includes('ram') || cat.includes('memoria')) return PartType.RAM;
+  return PartType.OTHER;
 };
 
 // Helper para mapear valores a DeviceType
 const mapCategoryToDeviceType = (category: string): DeviceType => {
-  const categoryLower = category?.toLowerCase().trim() || '';
-  if (categoryLower.includes('móvil') || categoryLower.includes('mobile')) return DeviceType.MOBILE;
-  if (categoryLower.includes('tablet')) return DeviceType.TABLET;
-  if (categoryLower.includes('laptop') || categoryLower.includes('computadora')) return DeviceType.LAPTOP;
+  const cat = category?.toLowerCase().trim() || '';
+  if (cat.includes('móvil') || cat.includes('movil') || cat.includes('celular') || cat.includes('iphone') || cat.includes('samsung')) return DeviceType.MOBILE;
+  if (cat.includes('tablet') || cat.includes('ipad')) return DeviceType.TABLET;
+  if (cat.includes('laptop') || cat.includes('pc') || cat.includes('macbook')) return DeviceType.LAPTOP;
   return DeviceType.MOBILE; // default
-};
-
-// Helper para verificar si está visible (más flexible)
-const isVisibleProduct = (visible: string | undefined): boolean => {
-  if (!visible) return false;
-  const visibleStr = String(visible).toLowerCase().trim();
-  return visibleStr === 'true' || visibleStr === 'verdadero' || visibleStr === 'sí' || visibleStr === 'si';
 };
 
 export const getProductsFromSheet = async (): Promise<Product[]> => {
@@ -41,50 +44,64 @@ export const getProductsFromSheet = async (): Promise<Product[]> => {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        const rawData = results.data as SheetProduct[];
+        const rawData = results.data as any[];
         
-        console.log("🔍 Total de filas recibidas:", rawData.length);
-        console.log("🔍 PRIMER PRODUCTO RECIBIDO:", rawData[0]); 
+        console.log("🔍 DIAGNÓSTICO DE IMÁGENES:");
+        if (rawData.length > 0) {
+           console.log("📋 Columnas detectadas en tu Excel:", Object.keys(rawData[0]));
+           console.log("📸 Ejemplo de dato crudo fila 1:", rawData[0]);
+        }
 
         const products: Product[] = rawData
           .filter(item => {
-            // Verifica que tenga id y que esté visible
-            if (!item.id || !isVisibleProduct(item.visible)) {
-              console.warn("⚠️ Producto filtrado:", { id: item.id, visible: item.visible });
-              return false;
-            }
-            return true;
+            // Usamos el helper para encontrar 'id' y 'visible' sin importar mayúsculas
+            const id = getCol(item, ['id', 'codigo', 'sku']);
+            const visible = getCol(item, ['visible', 'mostrar', 'publicado']);
+            
+            if (!id || !visible) return false;
+            
+            const visibleStr = String(visible).toLowerCase().trim();
+            return visibleStr === 'true' || visibleStr === 'verdadero' || visibleStr === 'sí' || visibleStr === 'si' || visibleStr === 'yes';
           })
           .map(item => {
             try {
+              // Buscamos la imagen en varias columnas posibles
+              const rawImg = getCol(item, ['imagen', 'image', 'img', 'foto', 'url']);
+              const nombre = getCol(item, ['nombre', 'producto', 'titulo', 'title']);
+              const descripcion = getCol(item, ['descripcion', 'descripción', 'detalles']);
+              const categoria = getCol(item, ['categoria', 'cat', 'marca']);
+              const estado = getCol(item, ['estado', 'condicion', 'condition']);
+              const precioPieza = getCol(item, ['precio_pieza', 'precio', 'costo']);
+              const precioFull = getCol(item, ['precio_full', 'precio_instalado', 'full']);
+
+              // Si la imagen viene vacía o da error, usamos un placeholder más fiable
+              const validImg = rawImg && rawImg.trim().length > 5 ? rawImg.trim() : 'https://placehold.co/400x300/1e293b/d4af37?text=Sin+Foto';
+
               return {
-                id: item.id?.trim() || `prod_${Date.now()}`,
-                title: item.nombre?.trim() || 'Sin título',
-                description: item.descripcion?.trim() || 'Consultar detalles en tienda.',
-                brand: item.categoria?.trim() || 'N/A',
-                deviceType: mapCategoryToDeviceType(item.categoria),
-                partType: mapCategoryToPartType(item.categoria),
-                condition: item.estado?.toLowerCase().includes('nuevo') ? ProductCondition.NEW : ProductCondition.USED,
-                pricePartOnly: Number(item.precio_pieza) || 0,
-                priceInstalled: Number(item.precio_full) || 0,
-                imageUrl: item.imagen?.trim() || 'https://via.placeholder.com/150',
+                id: getCol(item, ['id', 'sku']).trim() || `prod_${Date.now()}`,
+                title: nombre?.trim() || 'Producto Sin Nombre',
+                description: descripcion?.trim() || 'Detalles en tienda.',
+                brand: categoria?.trim() || 'Genérico',
+                deviceType: mapCategoryToDeviceType(categoria),
+                partType: mapCategoryToPartType(categoria),
+                condition: estado?.toLowerCase().includes('nuevo') ? ProductCondition.NEW : ProductCondition.USED,
+                pricePartOnly: Number(precioPieza) || 0,
+                priceInstalled: Number(precioFull) || 0,
+                imageUrl: validImg,
                 inStock: true
               };
             } catch (err) {
-              console.error("❌ Error mapeando producto:", item, err);
+              console.error("❌ Error procesando fila:", err);
               return null;
             }
           })
           .filter((product): product is Product => product !== null);
 
-        console.log("✅ Total productos cargados:", products.length);
-        if (products.length === 0) {
-          console.warn("⚠️ ADVERTENCIA: No se cargaron productos. Revisa que la columna 'visible' tenga valores 'TRUE' o 'VERDADERO'");
-        }
+        console.log(`✅ ${products.length} productos procesados correctamente.`);
         resolve(products);
       },
       error: (err) => {
-        console.error('❌ Error de conexión:', err);
+        console.error('❌ Error descargando Excel:', err);
         reject(err);
       }
     });
